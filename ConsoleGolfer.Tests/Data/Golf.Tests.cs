@@ -76,7 +76,27 @@ namespace ConsoleGolfer.Tests.Data
             sorePlayer = myGolf.NextPlayer().Name;
 
             //Assert
-            Assert.Equal(expectedPlayerName, sorePlayer);
+            Assert.Matches(expectedPlayerName, sorePlayer);
         }
+
+        //============== AddCourse =================================
+        [Fact]
+        public void AddCourse_CreateOneInput_OnlyOneThere()
+        {
+            //Arrange
+            Course localCourse = new Course(0, 200);
+            Golf myGolf = new Golf();
+            myGolf.AddCourse(localCourse);
+            int expectedNoCourses = 1;
+            int actualNoCourses;
+
+            //Act
+            actualNoCourses = myGolf.GetCourses().Length;
+
+            //Assert
+            Assert.Equal(expectedNoCourses, actualNoCourses);
+        }
+
+
     }
 }

@@ -13,7 +13,22 @@
 *          \/  |_||_|           \/            \/    \/   *
 *                                                        *
 *********** 2021-03-12 ** Richard Krejstrup **************/
-
+/*
+ * This is an older assignment that I got as "extra" in the
+ * C# .Net education. Took me two workdays time to make this.
+ * Made a simple UML Class diagram and a flow chart to have
+ * a clue of what I was going to do. And that took me like
+ * 1/3 of the total time - but absolutely worth it!
+ * The charts are still crude and I think I leave it to that,
+ * I will have other more important thins to do and this will
+ * also show that the prestudy and the final solution is not
+ * spot on, but well done prestudy is not so far away and
+ * mostly half of the work done.
+ * The xUnit-tests is not that extensive. I just used 10.
+ * One of the exercise tasks was skipped: throw an exception
+ * if out of bound.
+ * 
+*/
 
 using System;
 
@@ -39,6 +54,7 @@ namespace ConsoleGolfer
             int myPlayerSwingResult;
             char CharacterIn;
             int nrOfPlayersInput;
+            int myPlayCounter = 1;
 
             // ====== Here is where the game begins ===========================
             while (!gameEnded)
@@ -69,7 +85,7 @@ namespace ConsoleGolfer
                 } while (morePlayers);
                 Console.Clear();
 
-                // ============ Create a new Course (later you can add more courses) ===
+                // ============ Create a new Course (later on maybe you can add more courses) ===
                 int myRandomCourseRange = aRandomObject.Next(100, 701);
                 myCourse = new Course(Indexer.NextCourseId(), myRandomCourseRange);
                 myGolf.AddCourse(myCourse);
@@ -77,7 +93,9 @@ namespace ConsoleGolfer
                 {
                     thePlayers.LengthToGo = myRandomCourseRange;
                 }
-
+                // To use more than one course use the myPlayCounter that increases when all
+                // players are done on the current course. Se furhter down...
+                //-------------------------------------------------------------------------------- 
 
 
                 stillPlayersPlaying = true;
@@ -89,7 +107,7 @@ namespace ConsoleGolfer
 
                     myActivePlayer = myGolf.NextPlayer();
                     Console.WriteLine($"* You are up next: Player {myActivePlayer.Id}: {myActivePlayer.Name}." +
-                                        $"\n* To cup:{myActivePlayer.LengthToGo} (of total {myCourse.TotalLength}m)");
+                                        $"\n* To flag: {myActivePlayer.LengthToGo}m (of total {myCourse.TotalLength}m)");
 
                     myPlayerSwingInputAngle = GetNumber($"* Ok, {myActivePlayer.Name} what Angle? [deg elevation] : ");
                     myPlayerSwingInputSpeed = GetNumber($"* Ok, {myActivePlayer.Name} what Speed? [m/s]: ");
@@ -98,7 +116,7 @@ namespace ConsoleGolfer
                     Console.WriteLine("* Oh god it was {0} meters!", myPlayerSwingResult);
 
 
-                    //==== Next to come: Are we going to remove player?? ====================
+                    //==== Next to come: Are we going to "remove" player?? ====================
                     if (myActivePlayer.LengthToGo <= -100)
                     {
                         Console.WriteLine("Well - actually {0}, that swing made you of the competiton.", myActivePlayer.Name);
@@ -116,8 +134,8 @@ namespace ConsoleGolfer
                         //myGolf.RemovePlayer(myActivePlayer);
                     }
 
-                    // === Are there still players left in game?? All Done??
 
+                    // === Are there still players left in game?? All Done??
                     stillPlayersPlaying = !myGolf.AreAllDone();
 
 
@@ -126,16 +144,36 @@ namespace ConsoleGolfer
                         Console.WriteLine("\n Hit return for a next round.");
                         Console.ReadLine(); // wait for return/enter
                         Console.Clear();
+
                     }
+                    else  //=== Enter below zone if players has still more Course(s) to play =====
+                    {
+                        myPlayCounter++;
+                        if (myGolf.GetCourses().Length >= myPlayCounter)
+                        {
+                            stillPlayersPlaying = true;
+                            myCourse = myGolf.GetCourses()[myPlayCounter - 1];
+                            foreach (Player aPlayer in myGolf.GetPlayers())
+                            {
+                                aPlayer.Done = false;
+                                aPlayer.LengthToGo = myCourse.TotalLength;
+                            }
+
+                            Console.WriteLine("\nThis course is done!");
+                            AfterMath(myGolf);
+                        }
+                    } //-------------------------------------------------------------------------
 
 
                 } while (stillPlayersPlaying);
 
                 Console.WriteLine("Now we don't have any more competitors... Bye!");
+
                 // Do the Aftermath!
                 AfterMath(myGolf);
 
-                // Play again?
+
+                // ====  Play again?
                 // y: Reset all values for new game...
                 // n: exit app
 
@@ -154,7 +192,11 @@ namespace ConsoleGolfer
                     gameEnded = true;
                 }
 
+
+                // =======  Note: here we would normally take care of the previous allocated obejcts memory,
+                // ==========  but nahh... This is not Cpp, let Cs take care of it: if new game => make new Golf.
             }
+
 
         }// ==== Here are the end of game. To Follow: Methods of Program ============
 
@@ -225,9 +267,14 @@ namespace ConsoleGolfer
 
         }
 
+
+        /// <summary>
+        /// EndSceen is just a personal congratulations screen... Nothing much.
+        /// </summary>
+        /// <param name="myActivePlayer">THe winning player.</param>
         public static void EndSceenPlayer(Player myActivePlayer)
         {
-            Console.WriteLine("OMG!! {0}, you finished the game!", myActivePlayer.Name);
+            Console.WriteLine("OMG!! {0}, you finished your game!", myActivePlayer.Name);
             Console.WriteLine("Statistics: ");
             int myLoop = 1;
             foreach (Strike playerStrikes in myActivePlayer.Getstrikes())
@@ -238,6 +285,10 @@ namespace ConsoleGolfer
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// The simplest header you can imagine for your game
+        /// </summary>
+        /// <param name="inputRounds">Shows the round players have been playing.</param>
         public static void SimpleMenu(int inputRounds)
         {
             Console.WriteLine("*===================================*");
@@ -245,15 +296,18 @@ namespace ConsoleGolfer
             Console.WriteLine("* Round: {0}                          *", inputRounds);
         }
 
-
+        /// <summary>
+        /// The end game statistics.
+        /// </summary>
+        /// <param name="theGame">The game data is passed in for reaching everything.</param>
         public static void AfterMath(Golf theGame)
         {
             Player[] thePlayers = theGame.GetPlayers();
             int Itarable = 0;
             Console.Clear();
             Console.WriteLine("*===============================================*");
-            Console.WriteLine("* The Console Golf: Game Final Statistics       *");
-            Console.WriteLine("* the Courts length: {0}  Par: {1}              *", theGame.GetCourses()[0].TotalLength, theGame.GetCourses()[0].Par);
+            Console.WriteLine("* The Console Golf: Game Statistics             *");
+            Console.WriteLine("* the Courts length: {0}m   Par: {1}              *", theGame.GetCourses()[0].TotalLength, theGame.GetCourses()[0].Par);
             foreach (Player item in thePlayers)
             {
                 Console.WriteLine("* Player {0}: ", item.Name); // Boogie, Birdie, Par...??
